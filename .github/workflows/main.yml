@@ -1,0 +1,40 @@
+name: Android Build (Kotlin DSL Fix)
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: # 允许手动点击运行
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. 检出你的代码
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # 2. 设置 Java 环境 (JDK 17 是 Android Studio 默认推荐)
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    # 3. 关键步骤：自动配置 Gradle 环境
+    # 这个插件会自动下载 Gradle 包装器，解决你根目录没有 gradlew 的问题
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
+
+    # 4. 执行编译命令
+    # assembleDebug 会生成调试版 APK
+    - name: Build with Gradle
+      run: gradle assembleDebug --no-daemon
+
+    # 5. 上传生成的 APK 文件
+    - name: Upload APK Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: my-app-debug-apk
+        path: app/build/outputs/apk/debug/app-debug.apk
+        

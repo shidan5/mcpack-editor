@@ -1,9 +1,9 @@
-name: Android CI (Auto-Download)
+name: Android CI (Final Fix)
 
 on:
   push:
     branches: [ "main" ]
-  workflow_dispatch: # 允许手动触发
+  workflow_dispatch: 
 
 jobs:
   build:
@@ -17,12 +17,13 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
+        cache: gradle
 
-    # 关键修改：不再依赖 gradlew，而是直接用 setup-java 自动下载 Gradle
+    # 关键修改：指定具体的 Gradle 版本，不再依赖 wrapper
     - name: Setup Gradle
       uses: gradle/gradle-build-action@v2
       with:
-        gradle-version: wrapper-script 
+        gradle-version: 8.5 
 
     - name: Build with Gradle
       run: gradle assembleDebug --no-daemon

@@ -1,0 +1,29 @@
+package com.mcpack.editor
+
+import android.graphics.BitmapFactory
+import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
+import com.mcpack.editor.databinding.ActivityPreviewBinding
+import java.io.File
+
+class PreviewActivity : AppCompatActivity() {
+
+    private lateinit var binding: ActivityPreviewBinding
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityPreviewBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        val filePath = intent.getStringExtra("texture_path")
+        if (filePath != null) {
+            val file = File(filePath)
+            if (file.exists()) {
+                val bitmap = BitmapFactory.decodeFile(file.absolutePath)
+                binding.ivPreview.setImageBitmap(bitmap)
+            }
+        }
+
+        binding.btnBack.setOnClickListener { finish() }
+    }
+}

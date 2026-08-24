@@ -1,0 +1,3 @@
+# 保留 Apache Commons Compress
+-keep class org.apache.commons.compress.** { *; }
+-dontwarn org.apache.commons.compress.**

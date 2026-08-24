@@ -1,0 +1,121 @@
+package com.mcpack.editor
+
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Environment
+import androidx.core.content.FileProvider
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.File
+import java.io.FileInputStream
+import java.util.UUID
+
+object PackManager {
+
+    fun getPackDir(context: Context): File {
+        val dir = File(context.getExternalFilesDir(null), "packs/MyTexturePack")
+        if (!dir.exists()) dir.mkdirs()
+        // 创建标准目录结构
+        File(dir, "textures/blocks").mkdirs()
+        File(dir, "textures/items").mkdirs()
+        File(dir, "textures/entity").mkdirs()
+        File(dir, "textures/models").mkdirs()
+        return dir
+    }
+
+    fun createPack(context: Context, name: String, description: String, mcVersion: String) {
+        val packDir = getPackDir(context)
+        val manifest = generateManifest(name, description, mcVersion)
+        File(packDir, "manifest.json").writeText(manifest)
+    }
+
+    fun generateManifest(packName: String, description: String, mcVersion: String): String {
+        val manifest = JSONObject()
+        manifest.put("format_version", 2)
+
+        val header = JSONObject()
+        header.put("name", packName)
+        header.put("description", description)
+        header.put("uuid", UUID.randomUUID().toString())
+        header.put("version", JSONArray().put(1).put(0).put(0))
+
+        val parts = mcVersion.split(".")
+        val minEngine = JSONArray()
+        for (p in parts) {
+            minEngine.put(p.toInt())
+        }
+        header.put("min_engine_version", minEngine)
+        manifest.put("header", header)
+
+        val module = JSONObject()
+        module.put("type", "resources")
+        module.put("uuid", UUID.randomUUID().toString())
+        module.put("version", JSONArray().put(1).put(0).put(0))
+        manifest.put("modules", JSONArray().put(module))
+
+        return manifest.toString(4)
+    }
+
+    fun buildMcpack(context: Context, outputPath: String): Boolean {
+        val sourceDir = getPackDir(context)
+        return try {
+            ZipArchiveOutputStream(File(outputPath)).use { zaos ->
+                zaos.setEncoding("UTF-8")
+                zaos.setLevel(9)
+                addDirToZip(zaos, sourceDir, "")
+                zaos.finish()
+            }
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    private fun addDirToZip(zaos: ZipArchiveOutputStream, file: File, basePath: String) {
+        val entryName = if (basePath.isEmpty()) file.name else "$basePath/${file.name}"
+        if (file.isDirectory) {
+            zaos.putArchiveEntry(ZipArchiveEntry("$entryName/"))
+            zaos.closeArchiveEntry()
+            file.listFiles()?.forEach { child ->
+                addDirToZip(zaos, child, entryName)
+            }
+        } else {
+            val entry = ZipArchiveEntry(file, entryName)
+            zaos.putArchiveEntry(entry)
+            FileInputStream(file).use { fis ->
+                val buffer = ByteArray(4096)
+                var len: Int
+                while (fis.read(buffer).also { len = it } != -1) {
+                    zaos.write(buffer, 0, len)
+                }
+            }
+            zaos.closeArchiveEntry()
+        }
+    }
+
+    fun importToMinecraft(context: Context, mcpackFile: File) {
+        val uri: Uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            mcpackFile
+        )
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, "application/octet-stream")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            setPackage("com.mojang.minecraftpe")
+        }
+        try {
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            val fallback = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "application/octet-stream")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            context.startActivity(fallback)
+        }
+    }
+}

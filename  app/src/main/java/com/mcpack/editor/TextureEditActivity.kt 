@@ -1,0 +1,57 @@
+package com.mcpack.editor
+
+import android.graphics.Color
+import android.os.Bundle
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import com.mcpack.editor.databinding.ActivityTextureEditBinding
+import com.google.android.material.colorpicker.MaterialColorPicker
+import java.io.File
+import java.io.FileOutputStream
+
+class TextureEditActivity : AppCompatActivity() {
+
+    private lateinit var binding: ActivityTextureEditBinding
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityTextureEditBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        binding.btnPickColor.setOnClickListener {
+            val colors = intArrayOf(
+                Color.BLACK, Color.WHITE, Color.RED, Color.GREEN,
+                Color.BLUE, Color.YELLOW, Color.CYAN, Color.MAGENTA,
+                Color.GRAY, Color.parseColor("#8B4513"),
+                Color.parseColor("#228B22"), Color.parseColor("#808080")
+            )
+            val names = arrayOf("黑色","白色","红色","绿色","蓝色","黄色","青色","品红","灰色","棕色","深绿","深灰")
+            androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("选择颜色")
+                .setItems(names) { _, which ->
+                    binding.pixelCanvas.setColor(colors[which])
+                }
+                .show()
+        }
+
+        binding.btnClear.setOnClickListener {
+            binding.pixelCanvas.clear()
+        }
+
+        binding.btnSaveTexture.setOnClickListener {
+            try {
+                val bmp = binding.pixelCanvas.getBitmap()
+                val dir = PackManager.getPackDir(this)
+                val blocksDir = File(dir, "textures/blocks")
+                blocksDir.mkdirs()
+                val file = File(blocksDir, "custom_block.png")
+                FileOutputStream(file).use { fos ->
+                    bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, fos)
+                }
+                Toast.makeText(this, "已保存到 textures/blocks/custom_block.png", Toast.LENGTH_LONG).show()
+            } catch (e: Exception) {
+                Toast.makeText(this, "保存失败: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+}

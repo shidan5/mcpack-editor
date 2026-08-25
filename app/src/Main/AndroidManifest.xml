@@ -1,16 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
     <application
-        android:theme="@style/Theme.MCPETextureStudio"
-        android:label="MCPE 材质包工作室"
         android:allowBackup="true"
-        android:supportsRtl="true">
+        android:label="MCPE Texture Studio"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.MCPETextureStudio">
+
         <activity
             android:name=".MainActivity"
             android:exported="true">
+
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:mimeType="application/octet-stream" />
+                <data android:mimeType="application/zip" />
+            </intent-filter>
+
         </activity>
+
     </application>
+
 </manifest>
